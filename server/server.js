@@ -20,6 +20,9 @@ const app = express();
 const port = process.env.PORT || 8080;
 app.set('port', port);
 
+const username = process.env.username
+const password = process.env.password
+
 // Enable server-side sessions
 app.use(
 	session({
@@ -47,6 +50,9 @@ function getSession(request, response) {
 }
 
 function resumeSalesforceConnection(session) {
+	return new jsforce.Connection({
+      loginUrl: 'https://login.salesforce.com/'
+	})
 	return new jsforce.Connection({
 		instanceUrl: session.sfdcAuth.instanceUrl,
 		accessToken: session.sfdcAuth.accessToken,
@@ -141,10 +147,12 @@ app.get('/auth/whoami', function(request, response) {
  * Endpoint for performing a SOQL query on Salesforce
  */
 app.get('/query', function(request, response) {
+	/*
 	const session = getSession(request, response);
 	if (session == null) {
 		return;
 	}
+	*/
 
 	const query = request.query.q;
 	if (!query) {
@@ -152,17 +160,37 @@ app.get('/query', function(request, response) {
 		return;
 	}
 
-	const conn = resumeSalesforceConnection(session);
-	conn.query(query, function(error, result) {
-		if (error) {
-			console.error('Salesforce data API error: ' + JSON.stringify(error));
-			response.status(500).json(error);
-			return;
-		} else {
-			response.send(result);
-			return;
+	// const conn = resumeSalesforceConnection(session);
+
+	const conn = new jsforce.Connection({
+		// you can change loginUrl to connect to sandbox or prerelease env.
+		loginUrl: 'https://login.salesforce.com/'
+	  })
+	conn.login(username, password, function (err, userInfo) {
+		if (err) {
+		  return console.error(err)
 		}
-	});
+		// Now you can get the access token and instance URL information.
+		// Save them to establish connection next time.
+		console.log(conn.accessToken)
+		console.log(conn.instanceUrl)
+		// logged in user property
+		console.log('User ID: ' + userInfo.id)
+		console.log('Org ID: ' + userInfo.organizationId)
+
+		conn.query(query, function(error, result) {
+			if (error) {
+				console.error('Salesforce data API error: ' + JSON.stringify(error));
+				response.status(500).json(error);
+				return;
+			} else {
+				response.send(result);
+				return;
+			}
+		});
+	})
+
+
 });
 
 app.listen(app.get('port'), function() {

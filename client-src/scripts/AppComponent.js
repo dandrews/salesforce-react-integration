@@ -11,6 +11,7 @@ var App = module.exports = React.createClass({
     return {user: null};
   },
 
+  /*
   componentDidMount: function() {
 	const that = this;
 	// Get logged in user
@@ -30,6 +31,7 @@ var App = module.exports = React.createClass({
 		}
 	});
   },
+  */
 
   handleQueryExecution: function(data) {
 	const that = this;
@@ -55,9 +57,6 @@ var App = module.exports = React.createClass({
     return (
       <div>
         <NavBar user={this.state.user} />
-        { this.state.user == null ?
-          <LoginPanel />
-          :
           <div className="slds-m-around--xx-large">
             <QueryForm onExecuteQuery={this.handleQueryExecution} />
             { this.state.result ?
@@ -66,7 +65,6 @@ var App = module.exports = React.createClass({
               null
             }
           </div>
-        }
       </div>
     );
   }
